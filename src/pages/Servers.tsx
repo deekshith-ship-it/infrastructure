@@ -52,11 +52,11 @@ export function Servers({ servers, onAdd, onUpdate, onDelete, initialSelectedId 
   const [filterMode, setFilterMode] = useState<'all' | 'active' | 'expired' | 'suspended' | 'running' | 'down'>('all');
 
   useEffect(() => {
-    if (initialSelectedId) {
+    if (initialSelectedId && !selectedServer) {
       const match = servers.find(s => s.id === initialSelectedId);
       if (match) setSelectedServer(match);
     }
-  }, [initialSelectedId, servers]);
+  }, [initialSelectedId, servers, selectedServer]);
 
   const today = new Date();
 
@@ -130,15 +130,6 @@ export function Servers({ servers, onAdd, onUpdate, onDelete, initialSelectedId 
     setEditingServer(null);
   };
 
-  const getBackupBadge = (status?: string, date?: string) => {
-    if (status === 'Failed') return { label: 'CRITICAL', color: 'bg-red-500/10 text-red-500', icon: AlertCircle };
-    if (date) {
-      const lastBackup = new Date(date);
-      const diffDays = Math.floor((today.getTime() - lastBackup.getTime()) / (1000 * 3600 * 24));
-      if (diffDays > 7) return { label: 'STALE', color: 'bg-orange-500/10 text-orange-500', icon: AlertCircle };
-    }
-    return { label: 'HEALTHY', color: 'bg-emerald-500/10 text-emerald-500', icon: ShieldCheck };
-  };
 
   return (
     <div className="space-y-6">
