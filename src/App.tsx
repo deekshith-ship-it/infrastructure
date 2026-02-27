@@ -5,6 +5,8 @@ import { Domains } from './pages/Domains';
 import { Servers } from './pages/Servers';
 import { Emails } from './pages/Emails';
 import { Infra } from './pages/Infra';
+import { Finance } from './pages/Finance';
+import { Activity } from './pages/Activity';
 import { useData } from './hooks/useData';
 import type { ViewType } from './types';
 
@@ -41,6 +43,7 @@ function App() {
                         onAdd={data.addDomain}
                         onUpdate={data.updateDomain}
                         onDelete={data.deleteDomain}
+                        initialSelectedId={infraFilter}
                     />
                 );
             case 'servers':
@@ -50,6 +53,7 @@ function App() {
                         onAdd={data.addServer}
                         onUpdate={data.updateServer}
                         onDelete={data.deleteServer}
+                        initialSelectedId={infraFilter}
                     />
                 );
             case 'emails':
@@ -60,15 +64,24 @@ function App() {
                         onAdd={data.addEmail}
                         onUpdate={data.updateEmail}
                         onDelete={data.deleteEmail}
+                        initialSelectedId={infraFilter}
                     />
                 );
+            case 'cost':
+                return <Finance />;
+            case 'activity':
+                return <Activity logs={data.activityLogs} />;
             default:
                 return <Dashboard onViewChange={handleViewChange} />;
         }
     };
 
     return (
-        <Layout currentView={currentView} onViewChange={handleViewChange}>
+        <Layout
+            currentView={currentView}
+            onViewChange={handleViewChange}
+            notificationCount={data.stats.alerts}
+        >
             {renderView()}
         </Layout>
     );

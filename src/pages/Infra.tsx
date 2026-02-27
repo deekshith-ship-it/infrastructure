@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { Globe, Plus, Search, Pencil, Trash2, Phone, Mail as MailIcon, Hash, ShieldCheck, Database, Calendar, DollarSign, Server as ServerIcon, Cpu, Activity, Zap, HardDrive } from 'lucide-react';
+import { Globe, Plus, Search, Pencil, Trash2, Phone, Mail as MailIcon, Hash, ShieldCheck, Database, Calendar, DollarSign, Server as ServerIcon, Cpu, Activity, Zap, HardDrive, Layers, Shield } from 'lucide-react';
 import { Modal } from '@/components/Modal';
 import { MagneticButton } from '@/components/MagneticButton';
+import { motion } from 'framer-motion';
 import type { Domain, Server, Email } from '@/types';
 
 // ─── Unified entry type for display ────────────────────────────
@@ -32,6 +32,21 @@ interface InfraEntry {
     quota?: number;
     used?: number;
     createdAt?: string;
+    // SaaS Extensions
+    registrarName?: string;
+    autoRenew?: boolean;
+    sslExpiryDate?: string;
+    dnsPlaceholder?: string;
+    ipAddress?: string;
+    osType?: string;
+    cpuUsage?: number;
+    ramUsage?: number;
+    diskUsage?: number;
+    uptimeStatus?: string;
+    backupStatus?: string;
+    environmentTag?: string;
+    accountStatus?: string;
+    adminPasswordReset?: boolean;
 }
 
 interface InfraProps {
@@ -53,27 +68,6 @@ function getTypeBadge(type: string) {
     return map[type.toLowerCase()] || 'mg-badge mg-badge-domain';
 }
 
-function DotStatus({ status }: { status: string }) {
-    const colors: Record<string, string> = {
-        active: '#22c55e',
-        online: '#22c55e',
-        expire: '#ef4444',
-        inactive: '#ef4444',
-        offline: '#ef4444',
-        suspended: '#ef4444',
-        disabled: '#94a3b8',
-        pending: '#f59e0b',
-        maintenance: '#f59e0b',
-    };
-    return (
-        <span className="mg-dot" style={{
-            width: 7, height: 7, borderRadius: '50%',
-            background: colors[status.toLowerCase()] || '#94a3b8',
-            display: 'inline-block', flexShrink: 0
-        }} />
-    );
-}
-
 const initialForm: Omit<Domain, 'id'> = {
     name: '',
     status: 'active',
@@ -86,14 +80,6 @@ const initialForm: Omit<Domain, 'id'> = {
     endDate: '',
     provider: '',
     server: '',
-};
-
-const cardVariants = {
-    hidden: { opacity: 0, y: 20, scale: 0.97 },
-    visible: (i: number) => ({
-        opacity: 1, y: 0, scale: 1,
-        transition: { delay: i * 0.06, duration: 0.45, ease: [0.4, 0, 0.2, 1] as any }
-    }),
 };
 
 export function Infra({ domains, servers, emails, initialFilter, onAdd, onUpdate, onDelete }: InfraProps) {
@@ -126,6 +112,9 @@ export function Infra({ domains, servers, emails, initialFilter, onAdd, onUpdate
             endDate: d.endDate,
             provider: d.provider,
             server: d.server,
+            registrarName: d.registrarName,
+            autoRenew: d.autoRenew,
+            sslExpiryDate: d.sslExpiryDate,
         }));
 
         const serverEntries: InfraEntry[] = servers.map(s => ({
@@ -138,6 +127,13 @@ export function Infra({ domains, servers, emails, initialFilter, onAdd, onUpdate
             serverType: s.type,
             port: s.port,
             provider: s.type.toUpperCase(),
+            osType: s.osType,
+            cpuUsage: s.cpuUsage,
+            ramUsage: s.ramUsage,
+            diskUsage: s.diskUsage,
+            uptimeStatus: s.uptimeStatus,
+            backupStatus: s.backupStatus,
+            environmentTag: s.environmentTag,
         }));
 
         const emailEntries: InfraEntry[] = emails.map(e => ({
@@ -150,6 +146,8 @@ export function Infra({ domains, servers, emails, initialFilter, onAdd, onUpdate
             quota: e.quota,
             used: e.used,
             createdAt: e.createdAt,
+            accountStatus: e.accountStatus,
+            adminPasswordReset: e.adminPasswordReset,
         }));
 
         return [...domainEntries, ...serverEntries, ...emailEntries];
@@ -229,12 +227,11 @@ export function Infra({ domains, servers, emails, initialFilter, onAdd, onUpdate
         }
     };
 
-    // ─── Card icon based on entry type ────────────────────────
     const getEntryIcon = (type: string) => {
         switch (type) {
-            case 'server': return <Cpu size={18} className="text-emerald-400" />;
-            case 'email': return <MailIcon size={18} className="text-purple-400" />;
-            default: return <ShieldCheck size={18} className="text-blue-400" />;
+            case 'server': return <Cpu size={18} className="text-emerald-500" />;
+            case 'email': return <MailIcon size={18} className="text-purple-500" />;
+            default: return <ShieldCheck size={18} className="text-blue-500" />;
         }
     };
 
@@ -246,28 +243,35 @@ export function Infra({ domains, servers, emails, initialFilter, onAdd, onUpdate
         }
     };
 
-    // ─── Render card content based on entry type ──────────────
     const renderCardContent = (entry: InfraEntry) => {
         switch (entry.type) {
             case 'server':
                 return (
                     <>
-                        <div className="grid grid-cols-2 gap-y-4 mb-6 text-[12px]">
+                        <div className="grid grid-cols-2 gap-y-4 mb-6 text-[11px] font-bold uppercase tracking-wider">
                             <div className="space-y-1">
-                                <p className="flex items-center gap-1.5" style={{ color: 'var(--text-subtle)' }}><Globe size={12} /> Hostname</p>
-                                <p className="font-mono truncate" style={{ color: 'var(--text-secondary)' }}>{entry.hostname || '—'}</p>
+                                <p className="flex items-center gap-1.5 text-black dark:text-gray-500"><Globe size={11} className="text-gray-400" /> Hostname</p>
+                                <p className="font-mono truncate text-gray-800 dark:text-gray-400">{entry.hostname || '—'}</p>
                             </div>
                             <div className="space-y-1">
-                                <p className="flex items-center gap-1.5" style={{ color: 'var(--text-subtle)' }}><Zap size={12} /> IP</p>
-                                <p className="font-mono" style={{ color: 'var(--text-secondary)' }}>{entry.ip || '—'}</p>
+                                <p className="flex items-center gap-1.5 text-black dark:text-gray-500"><Zap size={11} className="text-gray-400" /> IP Axis</p>
+                                <p className="font-mono text-gray-800 dark:text-gray-400">{entry.ip || '—'}</p>
                             </div>
                             <div className="space-y-1">
-                                <p className="flex items-center gap-1.5" style={{ color: 'var(--text-subtle)' }}><Activity size={12} /> Protocol</p>
-                                <p className="font-bold uppercase" style={{ color: 'var(--text-secondary)' }}>{entry.serverType || '—'}</p>
+                                <p className="flex items-center gap-1.5 text-black dark:text-gray-500"><Activity size={11} className="text-gray-400" /> Protocol</p>
+                                <p className="text-gray-800 dark:text-gray-400">{entry.serverType || '—'}</p>
                             </div>
                             <div className="space-y-1">
-                                <p className="flex items-center gap-1.5" style={{ color: 'var(--text-subtle)' }}><Hash size={12} /> Port</p>
-                                <p className="font-bold" style={{ color: 'var(--text-secondary)' }}>{entry.port || '—'}</p>
+                                <p className="flex items-center gap-1.5 text-black dark:text-gray-500"><Hash size={11} className="text-gray-400" /> Port</p>
+                                <p className="text-gray-800 dark:text-gray-400">{entry.port || '—'}</p>
+                            </div>
+                        </div>
+                        <div className="space-y-2 mb-4">
+                            <div className="h-1 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                                <div className="h-full bg-blue-500/60" style={{ width: `${entry.cpuUsage || 0}%` }} />
+                            </div>
+                            <div className="h-1 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                                <div className="h-full bg-emerald-500/60" style={{ width: `${entry.ramUsage || 0}%` }} />
                             </div>
                         </div>
                     </>
@@ -275,54 +279,51 @@ export function Infra({ domains, servers, emails, initialFilter, onAdd, onUpdate
             case 'email':
                 return (
                     <>
-                        <div className="grid grid-cols-2 gap-y-4 mb-6 text-[12px]">
+                        <div className="grid grid-cols-2 gap-y-4 mb-6 text-[11px] font-bold uppercase tracking-wider">
                             <div className="space-y-1">
-                                <p className="flex items-center gap-1.5" style={{ color: 'var(--text-subtle)' }}><HardDrive size={12} /> Quota</p>
-                                <p className="font-bold" style={{ color: 'var(--text-secondary)' }}>{((entry.quota || 0) / 1024).toFixed(0)} GB</p>
+                                <p className="flex items-center gap-1.5 text-black dark:text-gray-500"><HardDrive size={11} className="text-gray-400" /> Quota</p>
+                                <p className="text-gray-800 dark:text-gray-400">{((entry.quota || 0) / 1024).toFixed(0)} GB</p>
                             </div>
                             <div className="space-y-1">
-                                <p className="flex items-center gap-1.5" style={{ color: 'var(--text-subtle)' }}><Database size={12} /> Used</p>
-                                <p className="font-bold" style={{ color: 'var(--text-secondary)' }}>{((entry.used || 0) / 1024).toFixed(1)} GB</p>
+                                <p className="flex items-center gap-1.5 text-black dark:text-gray-500"><Database size={11} className="text-gray-400" /> Used</p>
+                                <p className="text-gray-800 dark:text-gray-400">{((entry.used || 0) / 1024).toFixed(1)} GB</p>
                             </div>
-                            <div className="col-span-2 space-y-1">
-                                <p className="flex items-center gap-1.5" style={{ color: 'var(--text-subtle)' }}><Calendar size={12} /> Created</p>
-                                <p style={{ color: 'var(--text-secondary)' }}>
-                                    {entry.createdAt ? new Date(entry.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
-                                </p>
-                            </div>
+                        </div>
+                        <div className="h-1 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden mb-4">
+                            <div className="h-full bg-purple-500/60" style={{ width: `${entry.quota ? (entry.used || 0) / entry.quota * 100 : 0}%` }} />
                         </div>
                     </>
                 );
             default: // domain
                 return (
                     <>
-                        <div className="grid grid-cols-2 gap-y-4 mb-6 text-[12px]">
+                        <div className="grid grid-cols-2 gap-y-4 mb-6 text-[11px] font-bold uppercase tracking-wider">
                             <div className="space-y-1">
-                                <p className="flex items-center gap-1.5" style={{ color: 'var(--text-subtle)' }}><Hash size={12} /> Seats</p>
-                                <p className="font-bold" style={{ color: 'var(--text-secondary)' }}>{entry.seats || '0'}</p>
+                                <p className="flex items-center gap-1.5 text-black dark:text-gray-500"><Hash size={11} className="text-gray-400" /> Seats</p>
+                                <p className="text-gray-800 dark:text-gray-400">{entry.seats || '0'}</p>
                             </div>
                             <div className="space-y-1">
-                                <p className="flex items-center gap-1.5" style={{ color: 'var(--text-subtle)' }}><Globe size={12} /> Node</p>
-                                <p className="font-mono truncate uppercase" style={{ color: 'var(--text-secondary)' }}>{entry.server || 'LOCAL'}</p>
+                                <p className="flex items-center gap-1.5 text-black dark:text-gray-500"><Globe size={11} className="text-gray-400" /> Node</p>
+                                <p className="font-mono truncate text-gray-800 dark:text-gray-400">{entry.server || 'LOCAL'}</p>
                             </div>
                             <div className="space-y-1">
-                                <p className="flex items-center gap-1.5" style={{ color: 'var(--text-subtle)' }}><Phone size={12} /> Phone</p>
-                                <p style={{ color: 'var(--text-secondary)' }}>{entry.phone || '—'}</p>
+                                <p className="flex items-center gap-1.5 text-black dark:text-gray-500"><Phone size={11} className="text-gray-400" /> Phone</p>
+                                <p className="text-gray-800 dark:text-gray-400">{entry.phone || '—'}</p>
                             </div>
                             <div className="space-y-1">
-                                <p className="flex items-center gap-1.5" style={{ color: 'var(--text-subtle)' }}><MailIcon size={12} /> Contact</p>
-                                <p className="truncate" style={{ color: 'var(--text-secondary)' }}>{entry.contactEmail || '—'}</p>
+                                <p className="flex items-center gap-1.5 text-black dark:text-gray-500"><MailIcon size={11} className="text-gray-400" /> Contact</p>
+                                <p className="truncate text-gray-800 dark:text-gray-400">{entry.contactEmail || '—'}</p>
                             </div>
                         </div>
-                        <div className="mt-auto pt-4 space-y-4" style={{ borderTop: '1px solid var(--border-default)' }}>
-                            <div className="flex justify-between items-center text-[11px]">
-                                <div className="space-y-0.5">
-                                    <p className="uppercase tracking-tighter" style={{ color: 'var(--text-subtle)' }}>Investment</p>
-                                    <p className="text-blue-400 font-black text-sm">{formatCurrency(entry.money)}</p>
+                        <div className="mt-auto pt-4 space-y-4 border-t border-gray-100 dark:border-gray-800">
+                            <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
+                                <div className="space-y-1">
+                                    <p className="text-gray-400">Investment</p>
+                                    <p className="text-blue-500 dark:text-blue-400 font-black">{formatCurrency(entry.money)}</p>
                                 </div>
-                                <div className="text-right space-y-0.5">
-                                    <p className="uppercase tracking-tighter" style={{ color: 'var(--text-subtle)' }}>Timeline</p>
-                                    <p className="font-bold" style={{ color: 'var(--text-secondary)' }}>{formatDate(entry.startDate)} - {formatDate(entry.endDate)}</p>
+                                <div className="text-right space-y-1">
+                                    <p className="text-gray-400">Registry Timeline</p>
+                                    <p className="text-gray-700 dark:text-gray-300">{formatDate(entry.startDate)} — {formatDate(entry.endDate)}</p>
                                 </div>
                             </div>
                         </div>
@@ -331,78 +332,83 @@ export function Infra({ domains, servers, emails, initialFilter, onAdd, onUpdate
         }
     };
 
-    // ─── Render detail modal content ──────────────────────────
     const renderDetailContent = (entry: InfraEntry) => {
+        const itemClasses = "p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 transition-colors hover:border-gray-200 dark:hover:border-gray-700";
+        const labelClasses = "flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest mb-2 text-gray-400 dark:text-gray-500";
+        const valueClasses = "font-bold text-gray-900 dark:text-gray-100";
+
         switch (entry.type) {
             case 'server':
                 return (
                     <div className="space-y-6">
                         <div className="flex items-center gap-3">
-                            <DotStatus status={entry.status} />
-                            <span className="text-xs font-black uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>{entry.status}</span>
+                            <span className={`mg-badge ${entry.status === 'online' ? 'mg-badge-active' : 'mg-badge-inactive'}`}>{entry.status}</span>
                             <span className={getTypeBadge('server')}>SERVER</span>
-                            <span className="mg-badge" style={{ background: 'var(--bg-glass)', color: 'var(--text-muted)', border: '1px solid var(--border-default)' }}>PORT {entry.port}</span>
+                            <span className="mg-badge bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400">PORT {entry.port}</span>
                         </div>
-                        <div className="grid grid-cols-2 gap-4 modal-info-grid">
-                            <div className="p-4 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-default)' }}>
-                                <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-subtle)' }}><Globe size={12} /> Hostname</p>
-                                <p className="font-mono font-bold text-blue-400 break-all">{entry.hostname}</p>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className={itemClasses}>
+                                <p className={labelClasses}><Globe size={11} /> Hostname</p>
+                                <p className={`${valueClasses} font-mono text-blue-500 dark:text-blue-400 break-all`}>{entry.hostname}</p>
                             </div>
-                            <div className="p-4 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-default)' }}>
-                                <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-subtle)' }}><Zap size={12} /> IP Address</p>
-                                <p className="font-mono font-bold" style={{ color: 'var(--text-primary)' }}>{entry.ip}</p>
+                            <div className={itemClasses}>
+                                <p className={labelClasses}><Zap size={11} /> IP Address</p>
+                                <p className={`${valueClasses} font-mono`}>{entry.ip}</p>
                             </div>
-                            <div className="p-4 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-default)' }}>
-                                <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-subtle)' }}><Activity size={12} /> Protocol</p>
-                                <p className="font-bold text-lg" style={{ color: 'var(--text-primary)' }}>{(entry.serverType || '').toUpperCase()}</p>
+                            <div className={itemClasses}>
+                                <p className={labelClasses}><Activity size={11} /> Protocol</p>
+                                <p className={`${valueClasses} text-lg`}>{(entry.serverType || '').toUpperCase()}</p>
                             </div>
-                            <div className="p-4 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-default)' }}>
-                                <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-subtle)' }}><Hash size={12} /> Port</p>
-                                <p className="font-bold text-lg" style={{ color: 'var(--text-primary)' }}>{entry.port}</p>
+                            <div className={itemClasses}>
+                                <p className={labelClasses}><Layers size={11} /> Environment</p>
+                                <p className={`${valueClasses} text-lg text-emerald-500`}>{entry.environmentTag || 'Production'}</p>
+                            </div>
+                        </div>
+                        <div className="p-4 rounded-xl bg-blue-500/5 dark:bg-blue-500/[0.02] border border-blue-500/10 space-y-4">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-blue-500 dark:text-blue-400">Resource Utilization</p>
+                            <div className="grid grid-cols-3 gap-4">
+                                <div className="text-center">
+                                    <p className="text-[9px] uppercase font-bold text-gray-400 mb-1">CPU</p>
+                                    <p className="text-sm font-black text-gray-800 dark:text-gray-100">{entry.cpuUsage || 0}%</p>
+                                </div>
+                                <div className="text-center">
+                                    <p className="text-[9px] uppercase font-bold text-gray-400 mb-1">RAM</p>
+                                    <p className="text-sm font-black text-gray-800 dark:text-gray-100">{entry.ramUsage || 0}%</p>
+                                </div>
+                                <div className="text-center">
+                                    <p className="text-[9px] uppercase font-bold text-gray-400 mb-1">STORAGE</p>
+                                    <p className="text-sm font-black text-gray-800 dark:text-gray-100">{entry.diskUsage || 0}%</p>
+                                </div>
                             </div>
                         </div>
                     </div>
                 );
             case 'email':
                 const usedPct = entry.quota ? Math.min(100, ((entry.used || 0) / entry.quota) * 100) : 0;
-                const usageColor = usedPct > 80 ? '#ef4444' : usedPct > 60 ? '#f59e0b' : '#22c55e';
                 return (
                     <div className="space-y-6">
                         <div className="flex items-center gap-3">
-                            <DotStatus status={entry.status} />
-                            <span className="text-xs font-black uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>{entry.status}</span>
+                            <span className={`mg-badge ${entry.status === 'active' ? 'mg-badge-active' : 'mg-badge-inactive'}`}>{entry.status}</span>
                             <span className={getTypeBadge('email')}>EMAIL</span>
                         </div>
-                        <div className="p-4 rounded-xl space-y-3" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-default)' }}>
+                        <div className="p-6 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 space-y-4">
                             <div className="flex justify-between items-end">
-                                <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-subtle)' }}><HardDrive size={12} /> Storage</p>
-                                <p className="text-sm font-black" style={{ color: 'var(--text-secondary)' }}>
-                                    {((entry.used || 0) / 1024).toFixed(1)} <span style={{ color: 'var(--text-subtle)' }}>/</span> {((entry.quota || 0) / 1024).toFixed(0)} GB
+                                <p className={labelClasses}><HardDrive size={11} /> Storage Analytics</p>
+                                <p className="text-sm font-black text-gray-800 dark:text-gray-200">
+                                    {((entry.used || 0) / 1024).toFixed(1)} <span className="text-gray-400">/</span> {((entry.quota || 0) / 1024).toFixed(0)} GB
                                 </p>
                             </div>
-                            <div className="h-3 rounded-full overflow-hidden shadow-inner" style={{ background: 'var(--bg-tertiary)' }}>
+                            <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                                 <motion.div
-                                    style={{ height: '100%', background: usageColor, borderRadius: '9999px' }}
+                                    className="h-full bg-blue-500"
                                     initial={{ width: 0 }}
                                     animate={{ width: `${usedPct}%` }}
-                                    transition={{ duration: 0.8, ease: 'easeOut' }}
+                                    transition={{ duration: 1 }}
                                 />
                             </div>
-                            <div className="flex justify-between text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--text-subtle)' }}>
-                                <span>Allocation</span>
-                                <span style={{ color: usageColor }}>{usedPct.toFixed(0)}%</span>
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4 modal-info-grid">
-                            <div className="p-4 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-default)' }}>
-                                <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-subtle)' }}><HardDrive size={12} /> Quota</p>
-                                <p className="font-bold text-lg" style={{ color: 'var(--text-primary)' }}>{((entry.quota || 0) / 1024).toFixed(0)} GB</p>
-                            </div>
-                            <div className="p-4 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-default)' }}>
-                                <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-subtle)' }}><Calendar size={12} /> Created</p>
-                                <p className="font-bold" style={{ color: 'var(--text-primary)' }}>
-                                    {entry.createdAt ? new Date(entry.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
-                                </p>
+                            <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-gray-400">
+                                <span>Occupancy</span>
+                                <span className="text-blue-500">{usedPct.toFixed(1)}%</span>
                             </div>
                         </div>
                     </div>
@@ -411,37 +417,43 @@ export function Infra({ domains, servers, emails, initialFilter, onAdd, onUpdate
                 return (
                     <div className="space-y-6">
                         <div className="flex items-center gap-3">
-                            <DotStatus status={entry.status} />
-                            <span className="text-xs font-black uppercase tracking-widest" style={{ color: 'var(--text-secondary)' }}>{entry.status}</span>
+                            <span className={`mg-badge ${entry.status === 'active' ? 'mg-badge-active' : 'mg-badge-inactive'}`}>{entry.status}</span>
                             <span className={getTypeBadge('domain')}>DOMAIN</span>
-                            <span className="mg-badge" style={{ background: 'var(--bg-glass)', color: 'var(--text-muted)', border: '1px solid var(--border-default)' }}>{entry.provider || 'Generic'}</span>
+                            <span className="mg-badge bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400">{entry.provider || 'Generic'}</span>
                         </div>
-                        <div className="grid grid-cols-2 gap-4 modal-info-grid">
-                            <div className="p-4 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-default)' }}>
-                                <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-subtle)' }}><Hash size={12} /> Seats</p>
-                                <p className="font-bold text-lg" style={{ color: 'var(--text-primary)' }}>{entry.seats || '0'}</p>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className={itemClasses}>
+                                <p className={labelClasses}><Hash size={11} /> Seats</p>
+                                <p className={`${valueClasses} text-lg`}>{entry.seats || '0'}</p>
                             </div>
-                            <div className="p-4 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-default)' }}>
-                                <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-subtle)' }}><ServerIcon size={12} /> Node</p>
-                                <p className="font-mono font-bold truncate uppercase" style={{ color: 'var(--text-primary)' }}>{entry.server || 'LOCAL'}</p>
+                            <div className={itemClasses}>
+                                <p className={labelClasses}><ServerIcon size={11} /> Deployment Node</p>
+                                <p className={`${valueClasses} font-mono uppercase`}>{entry.server || 'LOCAL'}</p>
                             </div>
-                            <div className="p-4 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-default)' }}>
-                                <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-subtle)' }}><Phone size={12} /> Phone</p>
-                                <p className="font-bold" style={{ color: 'var(--text-primary)' }}>{entry.phone || '—'}</p>
+                            <div className={itemClasses}>
+                                <p className={labelClasses}><Phone size={11} /> Billing Phone</p>
+                                <p className={valueClasses}>{entry.phone || '—'}</p>
                             </div>
-                            <div className="p-4 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-default)' }}>
-                                <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-subtle)' }}><MailIcon size={12} /> Contact</p>
-                                <p className="font-bold truncate" style={{ color: 'var(--text-primary)' }}>{entry.contactEmail || '—'}</p>
+                            <div className={itemClasses}>
+                                <p className={labelClasses}><MailIcon size={11} /> Admin Email</p>
+                                <p className={`${valueClasses} truncate`}>{entry.contactEmail || '—'}</p>
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4 modal-info-grid">
-                            <div className="p-4 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-default)' }}>
-                                <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-subtle)' }}><DollarSign size={12} /> Investment</p>
-                                <p className="text-blue-400 font-black text-lg">{formatCurrency(entry.money)}</p>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className={itemClasses}>
+                                <p className={labelClasses}><DollarSign size={11} /> Annual Investment</p>
+                                <p className="text-blue-500 dark:text-blue-400 font-black text-lg">{formatCurrency(entry.money)}</p>
                             </div>
-                            <div className="p-4 rounded-xl" style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-default)' }}>
-                                <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: 'var(--text-subtle)' }}><Calendar size={12} /> Timeline</p>
-                                <p className="font-bold" style={{ color: 'var(--text-primary)' }}>{formatDate(entry.startDate)} — {formatDate(entry.endDate)}</p>
+                            <div className={itemClasses}>
+                                <p className={labelClasses}><Calendar size={11} /> Subscription Range</p>
+                                <p className={valueClasses}>{formatDate(entry.startDate)} — {formatDate(entry.endDate)}</p>
+                            </div>
+                        </div>
+                        <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/10 flex items-center gap-3">
+                            <Shield className="text-emerald-500" size={18} />
+                            <div>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Security Certificate</p>
+                                <p className="text-xs font-bold text-gray-700 dark:text-gray-300">SSL Active. Expires on {formatDate(entry.sslExpiryDate)}</p>
                             </div>
                         </div>
                     </div>
@@ -451,19 +463,20 @@ export function Infra({ domains, servers, emails, initialFilter, onAdd, onUpdate
 
     return (
         <div className="space-y-6">
-            {/* Header with Search and Actions */}
-            <motion.div
-                className="domain-header"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4 }}
-                style={{ marginBottom: '24px' }}
-            >
-                <h1 className="mg-page-title">Infra Management</h1>
+            <div className="flex flex-col gap-6 mb-8">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl font-black text-gray-900 dark:text-gray-100 tracking-tight">Infra Intelligence</h1>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Unified lifecycle management for servers, domains, and mail architecture.</p>
+                    </div>
+                    <MagneticButton onClick={openAddModal} className="mg-btn-primary shadow-sm">
+                        <Plus size={18} />
+                        <span>Register Axis</span>
+                    </MagneticButton>
+                </div>
 
-                <div className="domain-actions">
-                    {/* Filter Tabs with Counts */}
-                    <div className="infra-filter-tabs flex flex-wrap p-1 rounded-xl gap-1" style={{ background: 'var(--bg-glass)' }}>
+                <div className="flex flex-col lg:flex-row gap-4">
+                    <div className="flex bg-gray-100 dark:bg-gray-900 p-1 rounded-xl border border-gray-200 dark:border-gray-800 w-fit">
                         {[
                             { label: 'All', key: null, count: counts.all },
                             { label: 'Domain', key: 'domain', count: counts.domain },
@@ -475,20 +488,13 @@ export function Infra({ domains, servers, emails, initialFilter, onAdd, onUpdate
                                 <button
                                     key={f.label}
                                     onClick={() => setActiveFilter(f.key)}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all flex items-center gap-1.5 ${isActive
-                                        ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
-                                        : ''
+                                    className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${isActive
+                                        ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm'
+                                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                                         }`}
-                                    style={!isActive ? { color: 'var(--text-muted)' } : undefined}
                                 >
                                     {f.label}
-                                    <span
-                                        className="inline-flex items-center justify-center min-w-[20px] h-5 rounded-full text-[10px] font-black"
-                                        style={isActive
-                                            ? { background: 'rgba(255,255,255,0.25)', color: '#fff' }
-                                            : { background: 'var(--bg-glass)', color: 'var(--text-subtle)', border: '1px solid var(--border-default)' }
-                                        }
-                                    >
+                                    <span className={`inline-flex items-center justify-center min-w-[20px] h-5 rounded-full text-[9px] font-black ${isActive ? 'bg-blue-100 dark:bg-blue-900/40' : 'bg-gray-200 dark:bg-gray-800'}`}>
                                         {f.count}
                                     </span>
                                 </button>
@@ -496,238 +502,204 @@ export function Infra({ domains, servers, emails, initialFilter, onAdd, onUpdate
                         })}
                     </div>
 
-                    {/* Search Bar */}
-                    <div className="mg-search-wrap">
-                        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-subtle)' }} />
+                    <div className="relative flex-1 max-w-md">
+                        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
                             type="text"
-                            placeholder="Search..."
+                            placeholder="Find infrastructure node..."
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
-                            className="mg-input pl-12"
+                            className="mg-input pl-12 dark:bg-gray-900 dark:border-gray-800 dark:text-gray-100 shadow-none border-gray-200 focus:border-blue-500"
                         />
                     </div>
-
-                    <MagneticButton onClick={openAddModal} className="mg-btn-primary shadow-lg shadow-blue-500/20">
-                        <Plus size={18} />
-                        <span>Add Entry</span>
-                    </MagneticButton>
                 </div>
-            </motion.div>
+            </div>
 
-            {/* Content - Grid of Cards */}
             {filtered.length === 0 ? (
-                <motion.div
-                    className="mg-card p-12 text-center"
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.3 }}
-                >
-                    <div className="mg-empty-icon w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center" style={{ background: 'var(--bg-glass)' }}>
-                        <Database size={32} style={{ color: 'var(--text-subtle)' }} />
+                <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 p-16 text-center">
+                    <div className="w-16 h-16 rounded-2xl bg-gray-50 dark:bg-gray-800 mx-auto mb-4 flex items-center justify-center">
+                        <Database size={32} className="text-gray-300 dark:text-gray-600" />
                     </div>
-                    <p className="mg-empty-title text-lg">No records found</p>
-                    <p className="mg-empty-text mx-auto">
+                    <p className="text-lg font-bold text-gray-900 dark:text-gray-100">Zero entries mapped</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs mx-auto mt-2">
                         {activeFilter
-                            ? `No ${activeFilter} entries found matching your query.`
-                            : 'Add your first infrastructure entry to begin tracking.'}
+                            ? `No ${activeFilter} entities found for your current search criteria.`
+                            : 'Initialize your infrastructure records by adding a new entity.'}
                     </p>
                     {activeFilter && (
-                        <button onClick={() => setActiveFilter(null)} className="mt-4 text-xs font-bold text-blue-500 uppercase tracking-widest hover:underline">
-                            Clear Filters
+                        <button onClick={() => setActiveFilter(null)} className="mt-4 text-xs font-black text-blue-500 uppercase tracking-widest hover:underline">
+                            Reset Filters
                         </button>
                     )}
-                </motion.div>
+                </div>
             ) : (
-                <div className="card-container">
-                    {filtered.map((entry, i) => (
-                        <motion.div
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filtered.map((entry) => (
+                        <div
                             key={`${entry.type}-${entry.id}`}
-                            className="mg-card p-6 flex flex-col h-full cursor-pointer"
-                            variants={cardVariants}
-                            initial="hidden"
-                            animate="visible"
-                            custom={i}
-                            whileHover={{ y: -6, scale: 1.02 }}
-                            transition={{ type: 'spring', stiffness: 300 }}
+                            className="bg-white dark:bg-gray-900 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 flex flex-col h-full cursor-pointer transition-all hover:border-blue-500/20 dark:hover:border-blue-500/40 hover:shadow-md active:scale-[0.98]"
                             onClick={() => setSelectedEntry(entry)}
                         >
-                            {/* Card Header */}
                             <div className="flex justify-between items-start mb-4">
                                 <div className="flex items-center gap-3">
-                                    <motion.div
+                                    <div
                                         className="w-10 h-10 rounded-xl flex items-center justify-center"
                                         style={{ background: getIconBg(entry.type) }}
-                                        whileHover={{ rotate: 8, scale: 1.1 }}
-                                        transition={{ type: 'spring', stiffness: 300 }}
                                     >
                                         {getEntryIcon(entry.type)}
-                                    </motion.div>
+                                    </div>
                                     <div>
-                                        <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>{entry.name}</h3>
+                                        <h3 className="font-black text-gray-900 dark:text-gray-100">{entry.name}</h3>
                                         <div className="flex items-center gap-1.5 mt-0.5">
-                                            <DotStatus status={entry.status} />
-                                            <span className="text-[10px] uppercase font-black tracking-widest" style={{ color: 'var(--text-subtle)' }}>{entry.status}</span>
+                                            <div className={`w-1.5 h-1.5 rounded-full ${entry.status === 'active' || entry.status === 'online' ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                                            <span className="text-[10px] uppercase font-black tracking-widest text-gray-400">{entry.status}</span>
                                         </div>
                                     </div>
                                 </div>
-                                {entry.type === 'domain' && (
-                                    <div className="flex gap-1">
-                                        <motion.button
+                                <div className="flex gap-2">
+                                    {entry.type === 'domain' && (
+                                        <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 const dom = domains.find(d => d.id === entry.id);
                                                 if (dom) openEditModalForDomain(dom);
                                             }}
-                                            className="mg-icon-btn p-1.5 rounded-lg"
-                                            whileHover={{ scale: 1.15, background: 'var(--bg-glass)' }}
-                                            whileTap={{ scale: 0.9 }}
+                                            className="p-2 rounded-lg text-gray-400 hover:text-blue-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                                         >
                                             <Pencil size={14} />
-                                        </motion.button>
-                                        <motion.button
-                                            onClick={(e) => { e.stopPropagation(); onDelete(entry.id); }}
-                                            className="mg-icon-btn danger p-1.5 rounded-lg"
-                                            whileHover={{ scale: 1.15, background: 'rgba(239, 68, 68, 0.1)' }}
-                                            whileTap={{ scale: 0.9 }}
-                                        >
-                                            <Trash2 size={14} />
-                                        </motion.button>
-                                    </div>
-                                )}
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); onDelete(entry.id); }}
+                                        className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50/50 dark:hover:bg-red-500/10 transition-colors"
+                                    >
+                                        <Trash2 size={14} />
+                                    </button>
+                                </div>
                             </div>
 
-                            {/* Badges */}
                             <div className="flex gap-2 mb-6">
                                 <span className={getTypeBadge(entry.type)}>{entry.type}</span>
                                 {entry.provider && (
-                                    <span className="mg-badge" style={{ background: 'var(--bg-glass)', color: 'var(--text-muted)', border: '1px solid var(--border-default)' }}>{entry.provider}</span>
+                                    <span className="mg-badge bg-gray-50 dark:bg-gray-800 border-gray-100 dark:border-gray-800 text-gray-500 dark:text-gray-400 uppercase">{entry.provider}</span>
                                 )}
                             </div>
 
-                            {/* Type-specific content */}
                             {renderCardContent(entry)}
-                        </motion.div>
+                        </div>
                     ))}
                 </div>
             )}
 
-            {/* Details Modal */}
             <Modal
                 isOpen={!!selectedEntry}
                 onClose={() => setSelectedEntry(null)}
-                title={selectedEntry?.name || 'Entry Details'}
-                subtitle={`${selectedEntry?.type?.toUpperCase() || ''} infrastructure entry`}
-                size="lg"
+                title={selectedEntry?.name || 'Asset Intelligence Detail'}
+                subtitle={`Registry ID: ${selectedEntry?.id.toUpperCase()}`}
             >
                 {selectedEntry && (
                     <div className="space-y-6">
                         {renderDetailContent(selectedEntry)}
-                        {/* Actions */}
-                        <div className="flex gap-4 pt-2 modal-actions">
+                        <div className="flex gap-4 pt-4 mt-6 border-t border-gray-100 dark:border-gray-800">
                             {selectedEntry.type === 'domain' && (
-                                <motion.button
+                                <button
                                     onClick={() => {
                                         const dom = domains.find(d => d.id === selectedEntry.id);
                                         if (dom) { openEditModalForDomain(dom); setSelectedEntry(null); }
                                     }}
                                     className="mg-btn-primary flex-1"
-                                    whileTap={{ scale: 0.96 }}
                                 >
-                                    <Pencil size={14} /> Edit Entry
-                                </motion.button>
+                                    <Pencil size={14} /> Update Registry
+                                </button>
                             )}
-                            <motion.button
+                            <button
                                 onClick={() => setSelectedEntry(null)}
-                                className="mg-btn-secondary flex-1"
-                                whileTap={{ scale: 0.96 }}
+                                className="mg-btn-secondary flex-1 dark:border-gray-800 dark:text-gray-300"
                             >
-                                Close
-                            </motion.button>
+                                Dismiss
+                            </button>
                         </div>
                     </div>
                 )}
             </Modal>
 
-            {/* Add/Edit Modal */}
             <Modal
                 isOpen={isModalOpen}
                 onClose={closeModal}
-                title={editingDomain ? 'Edit Entry' : 'Add Entry'}
-                size="lg"
+                title={editingDomain ? 'Update Infrastructure Registry' : 'Register New Asset'}
             >
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <label className="mg-label">Entry Name</label>
-                            <input required placeholder="system.io" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="mg-input" />
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Entry Name (Node FQDN)</label>
+                            <input required placeholder="system.io" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="mg-input dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100" />
                         </div>
                         <div className="space-y-2">
-                            <label className="mg-label">Service Module</label>
-                            <select value={formData.service} onChange={e => setFormData({ ...formData, service: e.target.value as any })} className="mg-select font-bold">
-                                <option value="domain">Domain</option>
-                                <option value="email">Email</option>
-                                <option value="server">Server</option>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Service Architecture</label>
+                            <select value={formData.service} onChange={e => setFormData({ ...formData, service: e.target.value as any })} className="mg-select font-bold dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100">
+                                <option value="domain">Domain Controller</option>
+                                <option value="email">Mail Server</option>
+                                <option value="server">Cloud Infrastructure</option>
                             </select>
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <label className="mg-label">Status</label>
-                            <select value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value as any })} className="mg-select font-bold">
-                                <option value="active">Active</option>
-                                <option value="expire">Expire</option>
-                                <option value="inactive">Inactive</option>
-                                <option value="pending">Pending</option>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Operational Status</label>
+                            <select value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value as any })} className="mg-select font-bold dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100">
+                                <option value="active">Active (Production)</option>
+                                <option value="expire">Expire (Audit)</option>
+                                <option value="inactive">Inactive (Staging)</option>
+                                <option value="pending">Pending Transition</option>
                             </select>
                         </div>
                         <div className="space-y-2">
-                            <label className="mg-label">Capacity / Seats</label>
-                            <input type="number" min={0} value={formData.seats} onChange={e => setFormData({ ...formData, seats: parseInt(e.target.value) || 0 })} className="mg-input font-bold" />
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Allocation Capacity</label>
+                            <input type="number" min={0} value={formData.seats} onChange={e => setFormData({ ...formData, seats: parseInt(e.target.value) || 0 })} className="mg-input font-bold dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100" />
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <label className="mg-label">Phone</label>
-                            <input placeholder="+91…" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="mg-input" />
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Primary Liaison Phone</label>
+                            <input placeholder="+91…" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="mg-input dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100" />
                         </div>
                         <div className="space-y-2">
-                            <label className="mg-label">Contact Link</label>
-                            <input placeholder="@link" value={formData.contactEmail} onChange={e => setFormData({ ...formData, contactEmail: e.target.value })} className="mg-input" />
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                            <label className="mg-label">Investment (₹)</label>
-                            <input type="number" min={0} step={0.01} value={formData.money} onChange={e => setFormData({ ...formData, money: parseFloat(e.target.value) || 0 })} className="mg-input font-bold text-blue-400" />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="mg-label">Provider Name</label>
-                            <input placeholder="Name" value={formData.provider} onChange={e => setFormData({ ...formData, provider: e.target.value })} className="mg-input font-bold" />
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Admin Contact Channel</label>
+                            <input placeholder="@id / email" value={formData.contactEmail} onChange={e => setFormData({ ...formData, contactEmail: e.target.value })} className="mg-input dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100" />
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <label className="mg-label">Start Date</label>
-                            <input type="date" value={formData.startDate} onChange={e => setFormData({ ...formData, startDate: e.target.value })} className="mg-input" />
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Total Asset Investment (₹)</label>
+                            <input type="number" min={0} step={0.01} value={formData.money} onChange={e => setFormData({ ...formData, money: parseFloat(e.target.value) || 0 })} className="mg-input font-black text-blue-600 dark:text-blue-400 dark:bg-gray-800 dark:border-gray-700" />
                         </div>
                         <div className="space-y-2">
-                            <label className="mg-label">End Date</label>
-                            <input type="date" value={formData.endDate} onChange={e => setFormData({ ...formData, endDate: e.target.value })} className="mg-input" />
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Service Provider</label>
+                            <input placeholder="Hostinger/AWS/GCP" value={formData.provider} onChange={e => setFormData({ ...formData, provider: e.target.value })} className="mg-input font-bold dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100" />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Lifecycle Start</label>
+                            <input type="date" value={formData.startDate} onChange={e => setFormData({ ...formData, startDate: e.target.value })} className="mg-input dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100" />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Registry Expiration</label>
+                            <input type="date" value={formData.endDate} onChange={e => setFormData({ ...formData, endDate: e.target.value })} className="mg-input dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100" />
                         </div>
                     </div>
 
                     <div className="flex gap-4 pt-4">
-                        <motion.button type="button" onClick={closeModal} className="mg-btn-secondary flex-1" whileTap={{ scale: 0.96 }}>
-                            Cancel
-                        </motion.button>
-                        <motion.button type="submit" className="mg-btn-primary flex-1" whileTap={{ scale: 0.96 }}>
-                            {editingDomain ? 'Save Changes' : 'Add Entry'}
-                        </motion.button>
+                        <button type="button" onClick={closeModal} className="mg-btn-secondary flex-1 dark:border-gray-800 dark:text-gray-300">
+                            Cancel Registry
+                        </button>
+                        <button type="submit" className="mg-btn-primary flex-1">
+                            {editingDomain ? 'Update Axis' : 'Commence Registration'}
+                        </button>
                     </div>
                 </form>
             </Modal>

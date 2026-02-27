@@ -10,6 +10,9 @@ import {
   Shield,
   Sun,
   Moon,
+  Bell,
+  Activity,
+  DollarSign,
   ChevronRight
 } from 'lucide-react';
 import type { ViewType } from '@/types';
@@ -18,6 +21,7 @@ interface LayoutProps {
   currentView: ViewType;
   onViewChange: (view: ViewType) => void;
   children: React.ReactNode;
+  notificationCount?: number;
 }
 
 const navItems: { id: ViewType; label: string; icon: React.ElementType; description: string }[] = [
@@ -26,6 +30,8 @@ const navItems: { id: ViewType; label: string; icon: React.ElementType; descript
   { id: 'domains', label: 'Domains', icon: Globe, description: 'Manage domains' },
   { id: 'servers', label: 'Servers', icon: Server, description: 'Mail servers' },
   { id: 'emails', label: 'Emails', icon: Mail, description: 'Email accounts' },
+  { id: 'cost', label: 'Cost', icon: DollarSign, description: 'Billing & Vendors' },
+  { id: 'activity', label: 'Activity', icon: Activity, description: 'Audit logs' },
 ];
 
 function ThemeToggle({ theme, onToggle }: { theme: 'light' | 'dark'; onToggle: () => void }) {
@@ -66,7 +72,7 @@ function ThemeToggle({ theme, onToggle }: { theme: 'light' | 'dark'; onToggle: (
   );
 }
 
-export function Layout({ currentView, onViewChange, children }: LayoutProps) {
+export function Layout({ currentView, onViewChange, children, notificationCount }: LayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined') {
@@ -103,10 +109,10 @@ export function Layout({ currentView, onViewChange, children }: LayoutProps) {
       {/* ===== DESKTOP SIDEBAR ===== */}
       <aside className="hidden lg:flex flex-col w-60 fixed h-full z-30 mg-sidebar">
         {/* Logo */}
-        <div className="flex items-center justify-between px-5 py-6 mb-4 border-b" style={{ borderColor: 'var(--border-default)' }}>
+        <div className="flex items-center justify-between px-5 py-6 mb-4 border-b border-gray-100 dark:border-gray-800">
           <div className="flex items-center gap-3 group">
             <motion.div
-              className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/20"
+              className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm"
               style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)' }}
               whileHover={{ scale: 1.1, rotate: 8 }}
               transition={{ type: 'spring', stiffness: 300 }}
@@ -114,7 +120,7 @@ export function Layout({ currentView, onViewChange, children }: LayoutProps) {
               <Shield size={18} className="text-white" />
             </motion.div>
             <div>
-              <p className="font-extrabold text-sm tracking-wider" style={{ color: 'var(--text-primary)' }}>
+              <p className="font-extrabold text-sm tracking-wider text-gray-800 dark:text-gray-100">
                 MAILGUARDIAN
               </p>
               <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">
@@ -154,8 +160,8 @@ export function Layout({ currentView, onViewChange, children }: LayoutProps) {
             );
           })}
           {/* Theme Section */}
-          <div className="pt-4 mt-2 border-t" style={{ borderColor: 'var(--border-default)' }}>
-            <p className="text-[10px] font-bold uppercase tracking-widest px-3 mb-2" style={{ color: 'var(--text-subtle)' }}>Theme</p>
+          <div className="pt-4 mt-2 border-t border-gray-100 dark:border-gray-800">
+            <p className="text-[10px] font-bold uppercase tracking-widest px-3 mb-2 text-gray-500 dark:text-gray-400">Theme</p>
             <motion.button
               onClick={toggleTheme}
               className="mg-nav-item w-full"
@@ -170,27 +176,26 @@ export function Layout({ currentView, onViewChange, children }: LayoutProps) {
         </nav>
 
         {/* Bottom status */}
-        <div className="px-3 pb-6 pt-4 border-t" style={{ borderColor: 'var(--border-default)' }}>
-          <div className="rounded-xl p-4 border" style={{ background: 'var(--bg-glass)', borderColor: 'var(--border-default)' }}>
+        <div className="px-3 pb-6 pt-4 border-t border-gray-100 dark:border-gray-800">
+          <div className="rounded-xl p-4 border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50">
             <div className="flex items-center gap-2 mb-1.5">
               <span
                 className="mg-dot"
                 style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', display: 'inline-block' }}
               />
-              <p className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-primary)' }}>System Status</p>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-gray-800 dark:text-gray-100">System Status</p>
             </div>
-            <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>All systems operational</p>
+            <p className="text-[11px] text-gray-500 dark:text-gray-400">All systems operational</p>
           </div>
         </div>
       </aside>
 
       {/* ===== MOBILE HEADER ===== */}
       <div
-        className="lg:hidden fixed top-0 left-0 right-0 z-40 border-b"
+        className="lg:hidden fixed top-0 left-0 right-0 z-40 border-b border-gray-100 dark:border-gray-800"
         style={{
-          background: 'var(--bg-mobile-header)',
-          backdropFilter: 'blur(16px)',
-          borderColor: 'var(--border-default)',
+          background: theme === 'dark' ? '#0B1220' : '#ffffff',
+          borderBottom: '1px solid var(--border-default)'
         }}
       >
         <div className="flex items-center justify-between px-4 py-3">
@@ -206,6 +211,19 @@ export function Layout({ currentView, onViewChange, children }: LayoutProps) {
             </span>
           </div>
           <div className="flex items-center gap-2">
+            <div className="relative">
+              <motion.button
+                className="theme-toggle"
+                whileTap={{ scale: 0.9 }}
+              >
+                <Bell size={18} />
+                {notificationCount ? (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] flex items-center justify-center rounded-full font-bold">
+                    {notificationCount}
+                  </span>
+                ) : null}
+              </motion.button>
+            </div>
             <ThemeToggle theme={theme} onToggle={toggleTheme} />
             <motion.button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -287,7 +305,7 @@ export function Layout({ currentView, onViewChange, children }: LayoutProps) {
         {isMobileMenuOpen && (
           <motion.div
             className="lg:hidden fixed inset-0 z-30"
-            style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
+            style={{ background: 'rgba(0,0,0,0.5)' }}
             onClick={() => setIsMobileMenuOpen(false)}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

@@ -65,28 +65,28 @@
 
   /* ─── Dark Theme Variables ─── */
   .dark {
-    --bg-primary: #020617;
-    --bg-secondary: #0f172a;
-    --bg-tertiary: #1e293b;
-    --bg-glass: rgba(255, 255, 255, 0.05);
-    --bg-glass-hover: rgba(255, 255, 255, 0.08);
-    --bg-input: rgba(0, 0, 0, 0.2);
-    --bg-input-focus: rgba(0, 0, 0, 0.3);
-    --bg-sidebar: rgba(2, 6, 23, 0.7);
-    --bg-mobile-header: rgba(2, 6, 23, 0.9);
+    --bg-primary: #0B1220;
+    --bg-secondary: #0B1220;
+    --bg-tertiary: #111827;
+    --bg-glass: rgba(17, 24, 39, 0.6);
+    --bg-glass-hover: rgba(31, 41, 55, 0.8);
+    --bg-input: #111827;
+    --bg-input-focus: #1F2937;
+    --bg-sidebar: #0B1220;
+    --bg-mobile-header: #0B1220;
 
-    --text-primary: #e2e8f0;
-    --text-secondary: #cbd5e1;
-    --text-muted: #94a3b8;
-    --text-subtle: #64748b;
+    --text-primary: #E5E7EB;
+    --text-secondary: #9CA3AF;
+    --text-muted: #9CA3AF;
+    --text-subtle: #6B7280;
 
-    --border-default: rgba(255, 255, 255, 0.1);
-    --border-strong: rgba(255, 255, 255, 0.2);
+    --border-default: #1E293B;
+    --border-strong: #374151;
 
-    --card-bg: rgba(255, 255, 255, 0.05);
-    --card-border: rgba(255, 255, 255, 0.1);
-    --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
-    --card-hover-shadow: 0 20px 50px rgba(59, 130, 246, 0.25);
+    --card-bg: #111827;
+    --card-border: #1E293B;
+    --card-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --card-hover-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 
     --table-header-bg: rgba(0, 0, 0, 0.2);
     --table-row-hover: rgba(59, 130, 246, 0.03);
@@ -126,7 +126,7 @@
 
   /* Dark body gets the radial gradient */
   .dark body {
-    background: radial-gradient(circle at top right, #0f172a, #020617);
+    background: #0B1220;
   }
 
   /* Custom scrollbar */
@@ -157,8 +157,7 @@
   /* ── Glassmorphism Card ── */
   .mg-card {
     background: var(--card-bg);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
+
     border: 1px solid var(--card-border);
     border-radius: 18px;
     box-shadow: var(--card-shadow);
@@ -224,7 +223,7 @@
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
-    backdrop-filter: blur(4px);
+
     transition: transform 0.2s cubic-bezier(.4, 0, .2, 1), box-shadow 0.2s ease, background 0.2s ease;
   }
 
@@ -271,7 +270,7 @@
     color: var(--text-primary);
     outline: none;
     transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-    backdrop-filter: blur(4px);
+
   }
 
   .mg-input:focus {
@@ -300,7 +299,7 @@
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 14px center;
-    backdrop-filter: blur(4px);
+
     transition: border-color 0.2s ease;
   }
 
@@ -321,38 +320,65 @@
 
   /* ── Badges ── */
   .mg-badge {
-    padding: 4px 12px;
-    border-radius: 8px;
-    font-size: 11px;
-    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 0.8px;
-    backdrop-filter: blur(4px);
-    display: inline-block;
+    letter-spacing: 0.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border-width: 1px;
+    border-style: solid;
   }
 
   .mg-badge-active {
-    background: rgba(34, 197, 94, 0.15);
-    color: #22c55e;
-    border: 1px solid rgba(34, 197, 94, 0.3);
+    background: rgba(34, 197, 94, 0.1);
+    color: #4ade80;
+    border-color: rgba(34, 197, 94, 0.2);
+  }
+
+  .dark .mg-badge-active {
+    background: rgba(6, 78, 59, 0.4);
+    color: #6ee7b7;
+    border-color: rgba(16, 185, 129, 0.2);
   }
 
   .mg-badge-inactive {
-    background: rgba(239, 68, 68, 0.15);
-    color: #ef4444;
-    border: 1px solid rgba(239, 68, 68, 0.3);
+    background: rgba(239, 68, 68, 0.1);
+    color: #f87171;
+    border-color: rgba(239, 68, 68, 0.2);
+  }
+
+  .dark .mg-badge-inactive {
+    background: rgba(127, 29, 29, 0.4);
+    color: #fca5a5;
+    border-color: rgba(239, 68, 68, 0.2);
   }
 
   .mg-badge-expire {
-    background: rgba(245, 158, 11, 0.15);
-    color: #f59e0b;
-    border: 1px solid rgba(245, 158, 11, 0.3);
+    background: rgba(245, 158, 11, 0.1);
+    color: #fbbf24;
+    border-color: rgba(245, 158, 11, 0.2);
+  }
+
+  .dark .mg-badge-expire {
+    background: rgba(120, 53, 15, 0.4);
+    color: #fcd34d;
+    border-color: rgba(245, 158, 11, 0.2);
   }
 
   .mg-badge-pending {
-    background: rgba(245, 158, 11, 0.1);
-    color: #f59e0b;
-    border: 1px solid rgba(245, 158, 11, 0.2);
+    background: rgba(245, 158, 11, 0.05);
+    color: #fbbf24;
+    border-color: rgba(245, 158, 11, 0.1);
+  }
+
+  .dark .mg-badge-pending {
+    background: rgba(120, 53, 15, 0.2);
+    color: #fcd34d;
+    border-color: rgba(245, 158, 11, 0.1);
   }
 
   .mg-badge-domain {
@@ -420,7 +446,7 @@
   /* ── Table Styles ── */
   .mg-table-wrap {
     background: var(--card-bg);
-    backdrop-filter: blur(8px);
+
     border: 1px solid var(--card-border);
     border-radius: 18px;
     overflow: hidden;
@@ -469,7 +495,7 @@
   /* ── Sidebar ── */
   .mg-sidebar {
     background: var(--bg-sidebar);
-    backdrop-filter: blur(20px);
+
     border-right: 1px solid var(--border-default);
   }
 
