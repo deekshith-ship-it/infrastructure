@@ -35,10 +35,8 @@ function App() {
                         onUpdateDomain={data.updateDomain}
                         onDeleteDomain={data.deleteDomain}
                         onAddServer={data.addServer}
-                        onUpdateServer={data.updateServer}
                         onDeleteServer={data.deleteServer}
                         onAddEmail={data.addEmail}
-                        onUpdateEmail={data.updateEmail}
                         onDeleteEmail={data.deleteEmail}
                     />
                 );

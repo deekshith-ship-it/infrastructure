@@ -58,10 +58,8 @@ interface InfraProps {
     onUpdateDomain: (id: string, updates: Partial<Domain>) => void | Promise<unknown>;
     onDeleteDomain: (id: string) => void | Promise<unknown>;
     onAddServer: (server: Omit<Server, 'id'>) => void | Promise<unknown>;
-    onUpdateServer: (id: string, updates: Partial<Server>) => void | Promise<unknown>;
     onDeleteServer: (id: string) => void | Promise<unknown>;
     onAddEmail: (email: Omit<Email, 'id'>) => void | Promise<unknown>;
-    onUpdateEmail: (id: string, updates: Partial<Email>) => void | Promise<unknown>;
     onDeleteEmail: (id: string) => void | Promise<unknown>;
 }
 
@@ -91,8 +89,8 @@ const initialForm: Omit<Domain, 'id'> = {
 export function Infra({
     domains, servers, emails, initialFilter,
     onAddDomain, onUpdateDomain, onDeleteDomain,
-    onAddServer, onUpdateServer, onDeleteServer,
-    onAddEmail, onUpdateEmail, onDeleteEmail
+    onAddServer, onDeleteServer,
+    onAddEmail, onDeleteEmail
 }: InfraProps) {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFilter, setActiveFilter] = useState<string | null>(initialFilter || null);
