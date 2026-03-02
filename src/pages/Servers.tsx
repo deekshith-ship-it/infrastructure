@@ -49,14 +49,18 @@ export function Servers({ servers, onAdd, onUpdate, onDelete, initialSelectedId 
   const [editingServer, setEditingServer] = useState<ServerType | null>(null);
   const [formData, setFormData] = useState<Omit<ServerType, 'id'>>(initialForm);
   const [selectedServer, setSelectedServer] = useState<ServerType | null>(null);
+  const [processedId, setProcessedId] = useState<string | null>(null);
   const [filterMode, setFilterMode] = useState<'all' | 'active' | 'expired' | 'suspended' | 'running' | 'down'>('all');
 
   useEffect(() => {
-    if (initialSelectedId && !selectedServer) {
+    if (initialSelectedId && initialSelectedId !== processedId) {
       const match = servers.find(s => s.id === initialSelectedId);
-      if (match) setSelectedServer(match);
+      if (match) {
+        setSelectedServer(match);
+        setProcessedId(initialSelectedId);
+      }
     }
-  }, [initialSelectedId, servers, selectedServer]);
+  }, [initialSelectedId, servers, processedId]);
 
   const today = new Date();
 
@@ -416,7 +420,7 @@ export function Servers({ servers, onAdd, onUpdate, onDelete, initialSelectedId 
       <Modal
         isOpen={isModalOpen}
         onClose={closeModal}
-        title={editingServer ? 'Update Node Attributes' : 'Register New Node'}
+        title={editingServer ? 'Update Node Attributes' : 'Add Server'}
       >
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
@@ -520,9 +524,9 @@ export function Servers({ servers, onAdd, onUpdate, onDelete, initialSelectedId 
           </div>
 
           <div className="flex gap-4 pt-4">
-            <button type="button" onClick={closeModal} className="mg-btn-secondary flex-1 dark:border-gray-800 dark:text-gray-300">Abort</button>
+            <button type="button" onClick={closeModal} className="mg-btn-secondary flex-1 dark:border-gray-800 dark:text-gray-300">Cancel</button>
             <button type="submit" className="mg-btn-primary flex-1">
-              {editingServer ? 'Finalize Axis' : 'Commit Registry'}
+              {editingServer ? 'Update Server' : 'Add Server'}
             </button>
           </div>
         </form>

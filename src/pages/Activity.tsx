@@ -8,9 +8,10 @@ import type { ActivityLog } from '@/types';
 
 interface ActivityProps {
     logs: ActivityLog[];
+    onViewAsset: (module: string, id: string) => void;
 }
 
-export function Activity({ logs }: ActivityProps) {
+export function Activity({ logs, onViewAsset }: ActivityProps) {
     const [searchQuery, setSearchQuery] = useState('');
     const [moduleFilter, setModuleFilter] = useState<string>('all');
     const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -175,7 +176,10 @@ export function Activity({ logs }: ActivityProps) {
                                                 </span>
                                             </div>
                                             {log.relatedId && (
-                                                <button className="text-[10px] font-black text-blue-400 hover:text-blue-300 transition-colors uppercase tracking-widest flex items-center gap-1">
+                                                <button
+                                                    onClick={() => onViewAsset(log.module, log.relatedId!)}
+                                                    className="text-[10px] font-black text-blue-400 hover:text-blue-300 transition-colors uppercase tracking-widest flex items-center gap-1"
+                                                >
                                                     View Asset <ArrowUpRight size={10} />
                                                 </button>
                                             )}

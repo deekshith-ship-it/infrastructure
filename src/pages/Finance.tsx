@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Search, DollarSign, Tag, Clock, FileText, Upload, Trash2, PieChart as PieIcon, Eye, Pencil, Check, TrendingUp } from 'lucide-react';
 import { AreaChart, Area, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useData } from '@/hooks/useData';
@@ -8,7 +8,11 @@ import type { Vendor, Invoice } from '@/types';
 
 const COLORS = ['#8b5cf6', '#ec4899', '#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
 
-export function Finance() {
+interface FinanceProps {
+    initialSelectedId?: string | null;
+}
+
+export function Finance({ initialSelectedId }: FinanceProps) {
     const { vendors, invoices, addVendor, updateVendor, deleteVendor, addInvoice, updateInvoice, deleteInvoice } = useData();
     const [activeTab, setActiveTab] = useState<'vendors' | 'invoices'>('vendors');
     const [searchQuery, setSearchQuery] = useState('');
@@ -19,6 +23,25 @@ export function Finance() {
     // Form states
     const [vendorForm, setVendorForm] = useState<Partial<Vendor>>({ name: '', contactName: '', email: '', phone: '', serviceType: '', status: 'active' });
     const [invoiceForm, setInvoiceForm] = useState<Partial<Invoice>>({ vendorId: '', amount: 0, billingCycle: 'monthly', paymentStatus: 'Pending', issueDate: '', dueDate: '' });
+    const [processedId, setProcessedId] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (initialSelectedId && initialSelectedId !== processedId) {
+            const vMatch = vendors.find(v => v.id === initialSelectedId);
+            if (vMatch) {
+                setActiveTab('vendors');
+                handleEditVendor(vMatch);
+                setProcessedId(initialSelectedId);
+            } else {
+                const iMatch = invoices.find(i => i.id === initialSelectedId);
+                if (iMatch) {
+                    setActiveTab('invoices');
+                    handleEditInvoice(iMatch);
+                    setProcessedId(initialSelectedId);
+                }
+            }
+        }
+    }, [initialSelectedId, vendors, invoices, processedId]);
 
     const today = new Date();
     const currentMonth = today.getMonth();
@@ -445,7 +468,9 @@ export function Finance() {
                     <div className="flex gap-4 pt-4">
                         <button type="button" onClick={() => setIsModalOpen(false)} className="mg-btn-secondary flex-1 dark:border-gray-700 dark:text-gray-300">Cancel</button>
                         <button type="submit" className="mg-btn-primary flex-1">
-                            {editingItem ? 'Save Protocol' : 'Register Entry'}
+                            {editingItem
+                                ? (isVendorModal ? 'Update Vendor' : 'Update Invoice')
+                                : (isVendorModal ? 'Add Vendor' : 'Add Invoice')}
                         </button>
                     </div>
                 </form>

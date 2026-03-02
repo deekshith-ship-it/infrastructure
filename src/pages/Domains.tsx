@@ -43,15 +43,19 @@ export function Domains({ domains, onAdd, onUpdate, onDelete, initialSelectedId 
     dnsProvider: '',
   });
   const [selectedDomain, setSelectedDomain] = useState<Domain | null>(null);
+  const [processedId, setProcessedId] = useState<string | null>(null);
   const [filterMode, setFilterMode] = useState<'all' | 'active' | 'expire' | 'suspended' | 'expiring'>('all');
   const [isDnsOpen, setIsDnsOpen] = useState(false);
 
   useEffect(() => {
-    if (initialSelectedId) {
+    if (initialSelectedId && initialSelectedId !== processedId) {
       const match = domains.find(d => d.id === initialSelectedId);
-      if (match) setSelectedDomain(match);
+      if (match) {
+        setSelectedDomain(match);
+        setProcessedId(initialSelectedId);
+      }
     }
-  }, [initialSelectedId, domains]);
+  }, [initialSelectedId, domains, processedId]);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -203,7 +207,7 @@ export function Domains({ domains, onAdd, onUpdate, onDelete, initialSelectedId 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-black text-gray-900 dark:text-gray-100 tracking-tight">Domain Fleet</h1>
+          <h1 className="text-2xl font-black text-gray-900 dark:text-gray-100 tracking-tight">Domain</h1>
           {filterMode !== 'all' && (
             <button onClick={() => setFilterMode('all')} className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-500 dark:text-blue-400 border border-blue-500/20 uppercase tracking-widest">
               Clear Filter
@@ -441,7 +445,7 @@ export function Domains({ domains, onAdd, onUpdate, onDelete, initialSelectedId 
       <Modal
         isOpen={isModalOpen}
         onClose={closeModal}
-        title={editingDomain ? 'Update Registry Parameters' : 'Register New Asset'}
+        title={editingDomain ? 'Update Registry Parameters' : 'Add Domains'}
         size="lg"
       >
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -534,10 +538,10 @@ export function Domains({ domains, onAdd, onUpdate, onDelete, initialSelectedId 
 
           <div className="flex gap-4 pt-4">
             <button type="button" onClick={closeModal} className="mg-btn-secondary flex-1 dark:border-gray-800 dark:text-gray-300">
-              Abort
+              Cancel
             </button>
             <button type="submit" className="mg-btn-primary flex-1">
-              {editingDomain ? 'Commit Parameter' : 'Finalize Asset'}
+              {editingDomain ? 'Update Domain' : 'Add Domain'}
             </button>
           </div>
         </form>

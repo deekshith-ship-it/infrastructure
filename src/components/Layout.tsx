@@ -215,6 +215,7 @@ export function Layout({ currentView, onViewChange, children, notificationCount 
               <motion.button
                 className="theme-toggle"
                 whileTap={{ scale: 0.9 }}
+                onClick={() => handleNavClick('activity')}
               >
                 <Bell size={18} />
                 {notificationCount ? (

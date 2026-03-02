@@ -596,7 +596,11 @@ export function useData() {
       if (keys.length === 0) return;
 
       const setClause = keys.map(k => `${mapping[k]} = ?`).join(', ');
-      const args = keys.map(k => (updates as any)[k]);
+      const args = keys.map(k => {
+        const val = (updates as any)[k];
+        if (k === 'downtimeSimulation') return val ? 1 : 0;
+        return val;
+      });
       args.push(id);
 
       await turso.execute({ sql: `UPDATE servers SET ${setClause} WHERE id = ?`, args });

@@ -34,14 +34,18 @@ export function Emails({ emails, domains, onAdd, onUpdate, onDelete, initialSele
     resetRequested: false,
   });
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null);
+  const [processedId, setProcessedId] = useState<string | null>(null);
   const [filterMode, setFilterMode] = useState<'all' | 'active' | 'expire' | 'suspended' | 'storage'>('all');
 
   useEffect(() => {
-    if (initialSelectedId) {
+    if (initialSelectedId && initialSelectedId !== processedId) {
       const match = emails.find(e => e.id === initialSelectedId);
-      if (match) setSelectedEmail(match);
+      if (match) {
+        setSelectedEmail(match);
+        setProcessedId(initialSelectedId);
+      }
     }
-  }, [initialSelectedId, emails]);
+  }, [initialSelectedId, emails, processedId]);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -222,7 +226,7 @@ export function Emails({ emails, domains, onAdd, onUpdate, onDelete, initialSele
             disabled={domains.length === 0}
           >
             <Plus size={18} />
-            <span>Add Account</span>
+            <span>Add Email</span>
           </MagneticButton>
         </div>
       </div>
@@ -429,7 +433,7 @@ export function Emails({ emails, domains, onAdd, onUpdate, onDelete, initialSele
       <Modal
         isOpen={isModalOpen}
         onClose={closeModal}
-        title={editingEmail ? 'Modify Mail Seat' : 'Register New Mail Seat'}
+        title={editingEmail ? 'Modify Mail Seat' : 'Add Email'}
       >
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
@@ -545,9 +549,9 @@ export function Emails({ emails, domains, onAdd, onUpdate, onDelete, initialSele
           </div>
 
           <div className="flex gap-4 pt-4">
-            <button type="button" onClick={closeModal} className="mg-btn-secondary flex-1 dark:border-gray-800 dark:text-gray-300">Abort</button>
+            <button type="button" onClick={closeModal} className="mg-btn-secondary flex-1 dark:border-gray-800 dark:text-gray-300">Cancel</button>
             <button type="submit" className="mg-btn-primary flex-1">
-              {editingEmail ? 'Commit Updates' : 'Authorize Seat'}
+              {editingEmail ? 'Update Email' : 'Add Email'}
             </button>
           </div>
         </form>

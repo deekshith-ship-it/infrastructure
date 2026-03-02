@@ -68,8 +68,7 @@ export default function Dashboard({ onViewChange }: { onViewChange: (view: any, 
             {/* Page Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-xl font-black uppercase tracking-widest text-gray-800 dark:text-gray-100">Executive Dashboard</h1>
-                    <p className="text-xs mt-1 text-gray-500 dark:text-gray-400">Real-time health of your infrastructure network.</p>
+                    <h1 className="text-xl font-black uppercase tracking-widest text-gray-800 dark:text-gray-100">Dashboard</h1>
                 </div>
                 <div className="flex gap-2">
                     <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border py-1 px-3 flex items-center gap-2 border-gray-200 dark:border-gray-800 whitespace-nowrap">

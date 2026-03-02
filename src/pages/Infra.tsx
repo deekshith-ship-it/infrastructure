@@ -54,9 +54,15 @@ interface InfraProps {
     servers: Server[];
     emails: Email[];
     initialFilter?: string | null;
-    onAdd: (domain: Omit<Domain, 'id'>) => void | Promise<unknown>;
-    onUpdate: (id: string, updates: Partial<Domain>) => void | Promise<unknown>;
-    onDelete: (id: string) => void | Promise<unknown>;
+    onAddDomain: (domain: Omit<Domain, 'id'>) => void | Promise<unknown>;
+    onUpdateDomain: (id: string, updates: Partial<Domain>) => void | Promise<unknown>;
+    onDeleteDomain: (id: string) => void | Promise<unknown>;
+    onAddServer: (server: Omit<Server, 'id'>) => void | Promise<unknown>;
+    onUpdateServer: (id: string, updates: Partial<Server>) => void | Promise<unknown>;
+    onDeleteServer: (id: string) => void | Promise<unknown>;
+    onAddEmail: (email: Omit<Email, 'id'>) => void | Promise<unknown>;
+    onUpdateEmail: (id: string, updates: Partial<Email>) => void | Promise<unknown>;
+    onDeleteEmail: (id: string) => void | Promise<unknown>;
 }
 
 function getTypeBadge(type: string) {
@@ -82,7 +88,12 @@ const initialForm: Omit<Domain, 'id'> = {
     server: '',
 };
 
-export function Infra({ domains, servers, emails, initialFilter, onAdd, onUpdate, onDelete }: InfraProps) {
+export function Infra({
+    domains, servers, emails, initialFilter,
+    onAddDomain, onUpdateDomain, onDeleteDomain,
+    onAddServer, onUpdateServer, onDeleteServer,
+    onAddEmail, onUpdateEmail, onDeleteEmail
+}: InfraProps) {
     const [searchQuery, setSearchQuery] = useState('');
     const [activeFilter, setActiveFilter] = useState<string | null>(initialFilter || null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -174,12 +185,57 @@ export function Infra({ domains, servers, emails, initialFilter, onAdd, onUpdate
         return matchesSearch && matchesFilter;
     });
 
+    const handleDelete = (id: string, type: 'domain' | 'server' | 'email') => {
+        if (type === 'domain') onDeleteDomain(id);
+        else if (type === 'server') onDeleteServer(id);
+        else if (type === 'email') onDeleteEmail(id);
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (editingDomain) {
-            onUpdate(editingDomain.id, formData);
+            onUpdateDomain(editingDomain.id, formData);
         } else {
-            onAdd(formData);
+            if (formData.service === 'server') {
+                onAddServer({
+                    name: formData.name,
+                    hostname: formData.name,
+                    ip: '0.0.0.0', // default/placeholder
+                    status: 'online',
+                    type: 'smtp',
+                    port: 443,
+                    osType: 'Linux',
+                    ipAddress: '0.0.0.0',
+                    cpuUsage: 0,
+                    ramUsage: 0,
+                    diskUsage: 0,
+                    uptimeStatus: 'Running',
+                    backupStatus: 'Healthy',
+                    backupDate: new Date().toISOString(),
+                    environmentTag: 'Production',
+                    expiryDate: formData.endDate || new Date().toISOString(),
+                    downtimeSimulation: false
+                });
+            } else if (formData.service === 'email') {
+                const parts = formData.name.split('@');
+                const domainName = parts.length > 1 ? parts[1] : formData.name;
+                const parentDomain = domains.find(d => d.name === domainName);
+
+                onAddEmail({
+                    address: formData.name,
+                    domainId: parentDomain ? parentDomain.id : 'unknown',
+                    status: 'active',
+                    quota: 5120, // 5GB default
+                    used: 0,
+                    createdAt: new Date().toISOString(),
+                    storageLimit: 5120,
+                    storageUsed: 0,
+                    accountStatus: 'Active',
+                    adminPasswordReset: false
+                });
+            } else {
+                onAddDomain(formData);
+            }
         }
         closeModal();
     };
@@ -467,11 +523,10 @@ export function Infra({ domains, servers, emails, initialFilter, onAdd, onUpdate
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                         <h1 className="text-2xl font-black text-gray-900 dark:text-gray-100 tracking-tight">Infra Intelligence</h1>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Unified lifecycle management for servers, domains, and mail architecture.</p>
                     </div>
                     <MagneticButton onClick={openAddModal} className="mg-btn-primary shadow-sm">
                         <Plus size={18} />
-                        <span>Register Axis</span>
+                        <span>Add Register</span>
                     </MagneticButton>
                 </div>
 
@@ -570,7 +625,7 @@ export function Infra({ domains, servers, emails, initialFilter, onAdd, onUpdate
                                         </button>
                                     )}
                                     <button
-                                        onClick={(e) => { e.stopPropagation(); onDelete(entry.id); }}
+                                        onClick={(e) => { e.stopPropagation(); handleDelete(entry.id, entry.type); }}
                                         className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50/50 dark:hover:bg-red-500/10 transition-colors"
                                     >
                                         <Trash2 size={14} />
@@ -626,7 +681,7 @@ export function Infra({ domains, servers, emails, initialFilter, onAdd, onUpdate
             <Modal
                 isOpen={isModalOpen}
                 onClose={closeModal}
-                title={editingDomain ? 'Update Infrastructure Registry' : 'Register New Asset'}
+                title={editingDomain ? 'Update Infrastructure Registry' : (formData.service === 'domain' ? 'Add Domains' : formData.service === 'server' ? 'Add Server' : 'Add Email')}
             >
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -695,10 +750,10 @@ export function Infra({ domains, servers, emails, initialFilter, onAdd, onUpdate
 
                     <div className="flex gap-4 pt-4">
                         <button type="button" onClick={closeModal} className="mg-btn-secondary flex-1 dark:border-gray-800 dark:text-gray-300">
-                            Cancel Registry
+                            Cancel
                         </button>
                         <button type="submit" className="mg-btn-primary flex-1">
-                            {editingDomain ? 'Update Axis' : 'Commence Registration'}
+                            {editingDomain ? 'Update Register' : 'Add Register'}
                         </button>
                     </div>
                 </form>

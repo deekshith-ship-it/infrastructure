@@ -31,9 +31,15 @@ function App() {
                         servers={data.servers}
                         emails={data.emails}
                         initialFilter={infraFilter}
-                        onAdd={data.addDomain}
-                        onUpdate={data.updateDomain}
-                        onDelete={data.deleteDomain}
+                        onAddDomain={data.addDomain}
+                        onUpdateDomain={data.updateDomain}
+                        onDeleteDomain={data.deleteDomain}
+                        onAddServer={data.addServer}
+                        onUpdateServer={data.updateServer}
+                        onDeleteServer={data.deleteServer}
+                        onAddEmail={data.addEmail}
+                        onUpdateEmail={data.updateEmail}
+                        onDeleteEmail={data.deleteEmail}
                     />
                 );
             case 'domains':
@@ -68,9 +74,17 @@ function App() {
                     />
                 );
             case 'cost':
-                return <Finance />;
+                return <Finance initialSelectedId={infraFilter} />;
             case 'activity':
-                return <Activity logs={data.activityLogs} />;
+                return <Activity logs={data.activityLogs} onViewAsset={(view, id) => {
+                    const viewMap: Record<string, ViewType> = {
+                        'domain': 'domains',
+                        'server': 'servers',
+                        'email': 'emails',
+                        'cost': 'cost'
+                    };
+                    handleViewChange(viewMap[view] || 'dashboard', id);
+                }} />;
             default:
                 return <Dashboard onViewChange={handleViewChange} />;
         }
